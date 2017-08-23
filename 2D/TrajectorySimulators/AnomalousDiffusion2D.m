@@ -3,10 +3,7 @@
 %7/6/15
 
 function [x,y]=AnomalousDiffusion2D(Dalpha,alpha,points,N,dt,endtime)
-%primed time (for sampling)
-%need to sample times for a distribution with a long tail for longer times
-%and a shorter tail for earlier times
-%once you have the waiting time, steps are sampled from a normal with
+
 %variance 2Dalpha(dtprime)^alpha
 dtprime=dt/2000;
 %create array to store data
