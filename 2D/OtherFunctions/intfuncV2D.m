@@ -1,9 +1,9 @@
-%Integration function for 1D Directed Diffusion
+%Integration function for 2D Directed Diffusion
 %Rebecca Menssen
 %Last Updated: 8/30/17
 
 %This function creates the grid necessary to integrate across a range of
-%diffusion parameters using trapz
+%directed diffusion parameters using trapz
 
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
@@ -18,7 +18,7 @@
 %out--structure of probability values for a range of V and Dv values
 
 
-function[out]=intfuncV(X1,X2,N,yi,ri,dr,tau)
+function[out]=intfuncV2D(X1,X2,N,yi,ri,dr,tau)
 out=zeros(length(X1),length(X2));
 for i = 1:length(X1)
     for j = 1:length(X2)
@@ -26,7 +26,9 @@ for i = 1:length(X1)
         D=X2(i,j);
         
         %calculate predicted probabilities
-        z = dr/((4*pi*D*tau)^(1/2)).*exp(-(ri.^2+V^2*tau^2)/(4*D*tau)+ri*V/(2*D));
+        a = -(ri.^2+V^2*tau^2)/(4*D*tau);
+        b = ri*V/(2*D);
+        z=dr*ri/(2*D*tau).*exp(a).*besseli(0, b);
         
         %calculate P(JDD|model,parameters)
         denom=prod(sqrt(2*pi*N*z));

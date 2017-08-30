@@ -132,7 +132,8 @@ param.alpha=temp(2);
         %predicted JDD probabilities based on input parameters
         fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
             (besselk(0,ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
-        predicted=dr*ri/(Dalpha).*abs(integral(fun,min,-1*min,'ArrayValued',true,'AbsTol',1e-6));
+        predicted=dr*ri/(Dalpha).*abs(integral(fun,min,-1*min,...
+            'ArrayValued',true,'AbsTol',1e-6));
         
         %actual JDD probabilities
         actual = yi;

@@ -1,4 +1,4 @@
-%Integration function for 1D Diffusion
+%Integration function for 2D Diffusion
 %Rebecca Menssen
 %Last Updated: 8/30/17
 
@@ -17,13 +17,13 @@
 %%%%%%%%%%OUTPUTS%%%%%%%%%%
 %out--structure of probability values for a range of D values
 
-function[out]=intfuncD(x1,N,yi,ri,dr,tau)
+function[out]=intfuncD2D(x1,N,yi,ri,dr,tau)
 out=zeros(length(x1),1);
 for i = 1:length(x1)
     D = x1(i);
     
     %calculate predicted probabilities
-    z=dr/((pi*D*tau)^(1/2)).*exp(-ri.^2/(4*D*tau));
+    z=dr*ri/(2*D*tau).*exp(-ri.^2/(4*D*tau));
     
     %calculate P(JDD|model,parameters)
     denom=prod(sqrt(2.*pi.*N.*z));

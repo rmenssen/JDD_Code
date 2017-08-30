@@ -1,13 +1,12 @@
-%Integration function for 1D Directed Diffusion
+%Integration function for 2D Anomalous Diffusion
 %Rebecca Menssen
 %Last Updated: 8/30/17
 
 %This function creates the grid necessary to integrate across a range of
-%diffusion parameters using trapz
-
+%anomalous diffusion parameters using trapz
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
-%x1,x2--equally spaced array of V and Dv values to integrate over
+%x1,x2--equally spaced array of Dalpha and alpha values to integrate over
 %N--the number of trajectories/points in JDD
 %yi--vector of the percentage of trajectories in each JDD bin
 %ri--vector of the midpoints of the JDD bins
@@ -15,18 +14,28 @@
 %tau--the duration of each trajectory (the time lag*dt)
 
 %%%%%%%%%%OUTPUTS%%%%%%%%%%
-%out--structure of probability values for a range of V and Dv values
+%out--structure of probability values for a range of Dalpha and alpha
+%values
 
-
-function[out]=intfuncV(X1,X2,N,yi,ri,dr,tau)
+function[out]=intfuncA2D(X1,X2,N,yi,ri,dr,tau)
 out=zeros(length(X1),length(X2));
 for i = 1:length(X1)
     for j = 1:length(X2)
-        V=X1(i,j);
-        D=X2(i,j);
+        Dalpha=X1(i,j);
+        alpha=X2(i,j);
+        
+        %setting integration limits based on alpha
+        if alpha < 0.5
+            min=-300^(.5/alpha); %limits on inverse laplace transform
+        else
+            min=-500;
+        end
         
         %calculate predicted probabilities
-        z = dr/((4*pi*D*tau)^(1/2)).*exp(-(ri.^2+V^2*tau^2)/(4*D*tau)+ri*V/(2*D));
+        fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
+            (besselk(0,ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
+        z=dr*ri/(Dalpha).*abs(integral(fun,min,-1*min,...
+            'ArrayValued',true,'AbsTol',1e-6));
         
         %calculate P(JDD|model,parameters)
         denom=prod(sqrt(2*pi*N*z));
