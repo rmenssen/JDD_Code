@@ -1,6 +1,18 @@
 %Calculate Jump Distances
 %Rebecca Menssen
-%7/7/15
+%Last Updated: 8/30/17
+
+%This function calculates the jump distance in two dimensions. It does not
+%allow for a sliding window, it just takes the first and last points. Thus
+%it also assumes all trajectories are of length timelag +1
+
+%%%%%%%%%%INPUTS%%%%%%%%%%
+%x,y--trajectory for each dimension
+%N--number of trajectories
+
+%%%%%%%%%%OUTPUTS%%%%%%%%%%
+%jd--list of all jump distances
+
 function [jd]=JumpDistance2D(x,y,N)
 jd=zeros(N,1);
 for i=1:N

@@ -1,4 +1,4 @@
-function [prob,method,value]=Integration(averages,N,yi,ri,dr,tau,beta,M)
+function [prob,method,value]=Integration2D(averages,N,yi,ri,dr,tau,beta,M)
 %vector for storing probabilities
 prob=zeros(3,1);
 %first calculate dbeta for each one
