@@ -12,10 +12,10 @@ M=points-1;
 N=3000; %number of trajectories total
 Nb=30; %number of bins %Nb=round(N/100)
 %D=0.02; %micro meters^2/s (used in D,DV, and DA)
-V=1; %micro m/s %For V and DV
+V=5; %micro m/s %For V and DV
 D=0.5;
 
-[x]=DirectedMotion1D(V,2*D*dt,points,N,dt,10);
+[x]=DirectedMotion1D(V,D,points,N,dt,10);
 [jd]=JumpDistance1D(x,N); %jd is a vertical vector
 [dr, Ni, yi, ri] =  BinningHist(jd, N, Nb,'yes');
 

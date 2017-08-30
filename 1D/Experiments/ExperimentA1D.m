@@ -1,12 +1,10 @@
+%Experiment with Anomalous Diffusion from simulation to model selection. 
+
 %Parameters and Preliminaries
-%rng('shuffle')
-rng(5)
-%tau=.14; %end of simulation
 tau=15*1;
-%dt=20*10^(-3); %timestep
 dt=1;
 points=round(tau/dt+1); %number of points in each trajectory
-M=points-1;
+
 N=3000; %number of trajectories total
 Nb=round(N/100); %number of bins %Nb=round(N/100)
 Dalpha=1; %micro meters^2/s^alpha For A and Da
