@@ -1,10 +1,9 @@
-%Integration function for 1D Diffusion
+%Integration function for 1D Pure Diffusion
 %Rebecca Menssen
 %Last Updated: 8/30/17
 
 %This function creates the grid necessary to integrate across a range of
 %diffusion parameters using trapz
-
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %x1--equally spaced array of D values to integrate over

@@ -3,8 +3,7 @@
 %Last Updated: 8/30/17
 
 %This function creates the grid necessary to integrate across a range of
-%diffusion parameters using trapz
-
+%directed diffusion parameters using trapz
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %x1,x2--equally spaced array of V and Dv values to integrate over

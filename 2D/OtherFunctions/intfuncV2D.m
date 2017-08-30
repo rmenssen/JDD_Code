@@ -5,7 +5,6 @@
 %This function creates the grid necessary to integrate across a range of
 %directed diffusion parameters using trapz
 
-
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %x1,x2--equally spaced array of V and Dv values to integrate over
 %N--the number of trajectories/points in JDD
