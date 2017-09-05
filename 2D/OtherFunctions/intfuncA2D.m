@@ -34,8 +34,8 @@ for i = 1:length(X1)
         %calculate predicted probabilities
         fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
             (besselk(0,ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
-        z=dr*ri/(Dalpha).*abs(integral(fun,min,-1*min,...
-            'ArrayValued',true,'AbsTol',1e-6));
+        z=dr*ri/(Dalpha).*abs(integral(fun,min-1i*1e-6,-1*min-1i*1e-6,...
+            'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
         
         %calculate P(JDD|model,parameters)
         denom=prod(sqrt(2*pi*N*z));

@@ -38,10 +38,11 @@ weights=wi;
 %make time vector
 t=dt*(0:points-1);
 
-%Finding xsquare average. Have to account for possible missing data and
-%crazy outliers, so using nanmedian to do this. Not exactly MSD then, but
-%for a simple way to find a seed, it works well.
-xsqavg=nanmedian((x1-repmat(x1(1,:),size(x1,1),1)).^2);
+%finding avg(x^2). Have to account for possible missing data. Outliers can
+%mess this calculation up, but there isn't too much that can be done in
+%that case, since using nanmedian causes other issues. 
+xsqavg=nanmean((x1-repmat(x1(1,:),size(x1,1),1)).^2,2);
+
 t=t';
 
 %Pure Diffusion Seeds

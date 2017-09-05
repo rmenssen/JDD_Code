@@ -1,40 +1,119 @@
-%Experiment to see if data is generated properly for
-%directed motion
+%Directed Diffusion Demonstration of JDD Method: 2D
+%Rebecca Menssen
+%Last Updated 9/1/17
 
-%Parameters and Preliminaries
-tau=15; %end of simulation
-dt=1; %timestep
-points=tau/dt+1; %number of points in each trajectory
-M=points-1;
-N=3000; %number of trajectories total
-Nb=30; %number of bins %Nb=round(N/100)
-D=0.02; %micro meters^2/s (used in D,DV, and DA)
-V=1; %micro m/s %For V and DV
-Dv=.5;
-Dalpha=0.02; %micro meters^2/s^alpha For A and Da
-alpha=0.5; %For A and DA
-D1=0.02; %micro meters^2/s %for DD
-D2=0.1; %micro meters^2/s for DD
-fd=0.5; %fraction of particles that are diffusing.
+%This code serves as a way to experiment with the JDD method. It provides a
+%demonstration of how the method works from start to finish. Parameters can
+%be edited to examine accuracy of the method. The code has five sections:
+%Parameters, Simulation, Initial Fitting, Bootstrapping, and Model
+%Selection. On a two core computer, Intel i5 with 8 GB of ram takes ~ 2 hrs
+%Often it is much faster
 
-[x,y]=DirectedMotion2D(V,2*Dv*dt,points,N,dt);
-[jd]=JumpDistance2D(x,y,N); %jd is a vertical vector
-[dr, Ni, yi, ri] =  BinningHist(jd, N, Nb,'yes');
-param = ModelFitting(tau, dr, ri, yi, Ni, N, points);
-z = -(ri.^2+V^2*tau^2)/(4*Dv*tau);
-y = ri*V/(2*Dv);
-data = N*dr*ri/(2*Dv*tau).*exp(z).*besseli(0, y);
-%data2 = N*dr*ri/(kv*M).*exp(z).*exp(y)./sqrt(2*pi*y);
-%data2 = N*dr*ri/(kv*M).*exp(z).*exp(y).*sqrt(y);
-%z1 = -(ri.^2+param.V^2*tau^2)/(2*M*param.kv);
-%y1 = ri*param.V*tau/(M*param.kv);
-%data2 = N*dr*ri/(param.kv*M).*exp(z1).*besseli(0, y1);
-%data3=N*dr*ri/(kv*M).*exp(-(ri-V*tau).^2/(2*M*kv))/(2*pi);
-%data3=N*dr*ri/(param.kv*M).*exp(z).*exp(y)/(2*pi);
-%data3=N*dr*ri/(param.kv*M).*exp(-(ri.^2+param.V^2*tau^2)/(2*M*param.kv));
-hold on 
-plot(ri,data,'b')
-%plot(ri,data2,'r')
-%plot(ri,data3,'g')
-%param.V
-%param.kv/2/dt
+%%
+%%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
+
+%Diffusion Constant
+V=5; %micro m/s
+Dv=1; %micro meters^2/s 
+
+%Time Step
+dt=1;
+
+%Time Lag, points and tau 
+timelag=15;
+points=timelag+1;
+tau=dt*timelag;
+
+%Number of trajectories
+N=3000; 
+
+%Number of Bins for fitting
+Nb=round(N/100);
+
+%Number of Bootstraps
+numboot=50;
+%%
+%%%%%%%%%%DIFFUSION SIMULATION AND CREATION OF JDD%%%%%%%%%%
+%set a seed
+seed=randi(1000);
+
+%Simulate Directed Diffusion: 
+[x,y]=DirectedMotion2D(V,Dv,points,N,dt,seed);
+
+%Create the Jump Distance
+[jd]=JumpDistance2D(x,y,N); 
+
+%Plot the Jump Distance
+figure(1)
+[dr, Ni, yi, ri]=BinningHist(jd, N, Nb,'yes');
+
+%Plot the predicted JDD on top of it
+z1=-(ri.^2+V^2*tau^2)/(4*Dv*tau);
+y1=ri*V/(2*Dv);
+predictedJDD=N*dr*ri/(2*Dv*tau).*exp(z1).*besseli(0, y1);
+hold on
+plot(ri,predictedJDD,'k','LineWidth',1.5)
+
+%%
+%%%%%%%%%%MODEL FITTING%%%%%%%%%%
+
+param = ModelFitting2D(tau, dr, ri, yi, Ni, N, points,dt,x,y);
+
+%plotting best fit for each model
+diffusionbest=N*dr*ri/(2*param.D*tau).*exp(-ri.^2/(4*param.D*tau));
+hold on
+plot(ri,diffusionbest,'b','LineWidth',1.5)
+
+z1 = -(ri.^2+param.V^2*tau^2)/(4*param.Dv*tau);
+y1 = ri*param.V/(2*param.Dv);
+directedbest = N*dr*ri/(2*param.Dv*tau).*exp(z1).*besseli(0, y1);
+plot(ri,directedbest,'r','LineWidth',1.5)
+
+if param.alpha < 0.5
+    min=-300^(.5/param.alpha); 
+else
+    min=-500;
+end
+fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(param.alpha-1)/(2.*pi).*...
+    (besselk(0,ri./(sqrt(param.Dalpha)).*((1i*p)^(param.alpha/2))));
+anombest=N*dr*ri/(param.Dalpha).*abs(integral(fun,min-1i*1e-6,-1*min-1i*1e-6,...
+    'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
+plot(ri,anombest,'g','LineWidth',1.5)
+
+legend('Jump Distance Distribution',['Predicted Directed Fit, V=',num2str(V),', D_V=',num2str(Dv)],...
+    ['Fit Diffusion, D=',num2str(param.D)],...
+    ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
+    ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
+
+xlabel('Jump Distance')
+ylabel('Count')
+title('Directed Diffusion Jump Distance Distribution and Fitted Results')
+
+%%
+%%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%
+
+%Set Up Storage
+Dboot=zeros(numboot,1);
+Vboot=zeros(numboot,1);
+Dvboot=zeros(numboot,1);
+Daboot=zeros(numboot,1);
+Aboot=zeros(numboot,1);
+
+parfor i=1:numboot
+    X = randi(N,N,1);
+    jdB=jd(X);
+    [drB, NiB, yiB, riB] =  BinningHist(jdB, N, Nb,'no');
+    paramB = ModelFitting2D(tau, drB, riB, yiB, NiB,N, points, dt, x,y);
+    Dboot(i)=paramB.D;
+    Vboot(i)=paramB.V;
+    Dvboot(i)=paramB.Dv;
+    Daboot(i)=paramB.Dalpha;
+    Aboot(i)=paramB.alpha;
+end
+
+beta=[param.D,param.V,param.Dv,param.Dalpha,param.alpha];
+dbeta=2*[std(Dboot),std(Vboot),std(Dvboot),std(Daboot), std(Aboot)];
+
+%%
+%%%%%%%%%%MODEL SELECTION%%%%%%%%%%
+[prob,value,method]=Integration2D(dbeta,beta,N,yi,ri,dr,tau);

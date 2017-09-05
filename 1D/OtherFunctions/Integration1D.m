@@ -1,6 +1,6 @@
 %1D integration for Bayesian Classifier
 %Rebecca Menssen
-%This version of the code: 10/24/16
+%This version of the code: 8/31/17
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %dbeta--defines the bounds on integration. Have been using 2 times the

@@ -1,6 +1,6 @@
-%Anomalous Diffusion Demonstration of JDD Method: 3D
+%Pure Diffusion Demonstration of JDD Method: 3D 
 %Rebecca Menssen
-%Last Updated 9/3/17
+%Last Updated 9/4/17
 
 %This code serves as a way to experiment with the JDD method. It provides a
 %demonstration of how the method works from start to finish. Parameters can
@@ -11,9 +11,9 @@
 
 %%
 %%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
+
 %Diffusion Constant
-Dalpha=1; %micro meters^2/s^alpha 
-alpha=0.8; %For A and DA
+D=1; %micro meters^2/s 
 
 %Time Step
 dt=1;
@@ -31,45 +31,24 @@ Nb=round(N/100);
 
 %Number of Bootstraps
 numboot=50;
-
 %%
+%%%%%%%%%%DIFFUSION SIMULATION AND CREATION OF JDD%%%%%%%%%%
 %set a seed
 seed=randi(1000);
 
-%Simulate Anomalous Diffusion: 
-[x,y,z]=AnomalousDiffusion3D(Dalpha,alpha,points,N,dt,tau,seed);
+%Simulate Diffusion: 
+[x,y,z]=Diffusion3D(D,points,N,dt,seed);
 
 %Create the Jump Distance
-[jd]=JumpDistance3D(x,y,z,N); %jd is a vertical vector
+[jd]=JumpDistance3D(x,y,z,N); 
 
 %Plot the Jump Distance
 figure(1)
-[dr, Ni, yi, ri] =  BinningHist(jd, N, Nb,'yes');
+[dr, Ni, yi, ri]=BinningHist(jd, N, Nb,'yes');
 
 %Plot the predicted JDD on top of it
-if alpha < 0.5
-    min=-300^(.5/alpha); %limits on inverse laplace transform
-else
-    min=-500;
-end
-fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
-    (exp(-ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
-min=-700;
+predictedJDD=N*dr*ri.^2/(2*sqrt(pi)*(D*tau)^(3/2)).*exp(-ri.^2/(4*D*tau));
 hold on
-
-%try splitting it up into 200 point intevals
-%first find the total number of intevals needed
-intsize=200;
-numint=ceil(abs(min+100)/intsize);
-predictedJDD=zeros(1,Nb);
-for i=1:numint
-    predictedJDD=predictedJDD+2*N*dr*ri/(Dalpha).*abs(integral(fun,min+(i-1)*intsize-1i*1e-6,min+i*(intsize)-1i*1e-6,...
-        'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
-end
-predictedJDD=predictedJDD+N*dr*ri/(Dalpha).*abs(integral(fun,-100-1i*1e-6,100-1i*1e-6,...
-    'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
-
-hold on 
 plot(ri,predictedJDD,'k','LineWidth',1.5)
 
 %%
@@ -96,9 +75,9 @@ end
 min=-700;
 intsize=200;
 numint=ceil(abs(min+100)/intsize);
+anombest=zeros(1,Nb);
 fun2=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(param.alpha-1)/(2.*pi).*...
     (exp(-ri./(sqrt(param.Dalpha)).*((1i*p)^(param.alpha/2))));
-anombest=zeros(size(predictedJDD));
 for i=1:numint
     anombest=anombest+2*N*dr*ri/(param.Dalpha).*abs(integral(fun2,min+(i-1)*intsize-1i*1e-6,min+i*(intsize)-1i*1e-6,...
         'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
@@ -107,15 +86,14 @@ anombest=anombest+N*dr*ri/(param.Dalpha).*abs(integral(fun2,-100-1i*1e-6,100-1i*
     'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
 plot(ri,anombest,'g','LineWidth',1.5)
 
-legend('Jump Distance Distribution',['Predicted Anomalous Fit, \alpha=',...
-    num2str(alpha),', D_\alpha=',num2str(Dalpha)],...
+legend('Jump Distance Distribution',['Predicted Diffusion Fit,D=',num2str(D)],...
     ['Fit Diffusion, D=',num2str(param.D)],...
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
 
 xlabel('Jump Distance')
 ylabel('Count')
-title('Anomalous Diffusion Jump Distance Distribution and Fitted Results')
+title('Pure Diffusion Jump Distance Distribution and Fitted Results')
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%
@@ -131,7 +109,7 @@ parfor i=1:numboot
     X = randi(N,N,1);
     jdB=jd(X);
     [drB, NiB, yiB, riB] =  BinningHist(jdB, N, Nb,'no');
-    paramB = ModelFitting2D(tau, drB, riB, yiB, NiB,N, points, dt, x,y);
+    paramB = ModelFitting3D(tau, drB, riB, yiB, NiB,N, points, dt, x,y,z);
     Dboot(i)=paramB.D;
     Vboot(i)=paramB.V;
     Dvboot(i)=paramB.Dv;

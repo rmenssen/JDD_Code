@@ -42,8 +42,8 @@ t=dt*(0:points-1);
 %Finding xsquare average. Have to account for possible missing data and
 %crazy outliers, so using nanmedian to do this. Not exactly MSD then, but
 %for a simple way to find a seed, it works well.
-xsqavg=nanmedian((x1-repmat(x1(1,:),size(x1,1),1)).^2+...
-    (x2-repmat(x2(1,:),size(x2,1),1)).^2);
+xsqavg=nanmean((x1-repmat(x1(1,:),size(x1,1),1)).^2+...
+    (x2-repmat(x2(1,:),size(x2,1),1)).^2,2);
 t=t';
 
 %Pure Diffusion Seeding
@@ -103,7 +103,7 @@ param.alpha=temp(2);
         D= x(2);
         
         %predicted JDD probabilities based on input parameters
-        z = -(ri.^2+V^2*tau^2)/(2*M*kv);
+        z = -(ri.^2+V^2*tau^2)/(4*D*tau);
         y = ri*V/(2*D);
         predicted = dr*ri/(4*D*tau).*exp(z).*besseli(0, y);
         

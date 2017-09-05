@@ -1,92 +1,127 @@
-%Experiment with Anomalous Diffusion from simulation to model selection. 
+%Pure Diffusion Demonstration of JDD Method
+%Rebecca Menssen
+%Last Updated 8/31/17
 
-%Parameters and Preliminaries
-tau=15*1;
-dt=1;
-points=round(tau/dt+1); %number of points in each trajectory
+%This code serves as a way to experiment with the JDD method. It provides a
+%demonstration of how the method works from start to finish. Parameters can
+%be edited to examine accuracy of the method. The code has five sections:
+%Parameters, Simulation, Initial Fitting, Bootstrapping, and Model
+%Selection.
 
-N=3000; %number of trajectories total
-Nb=round(N/100); %number of bins %Nb=round(N/100)
+%%
+%%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
+
+%Anomalous Diffusion Constant
 Dalpha=1; %micro meters^2/s^alpha For A and Da
+
+%Anomalous Exponent
 alpha=0.6; %For A and DA
-%Simulate Data
-[x]=AnomalousDiffusion1D(Dalpha,alpha,points,N,dt,tau,5);
-[jd]=JumpDistance1D(x,N); %jd is a vertical vector
+
+%Time Step
+dt=1;
+
+%Time Lag, points and tau 
+timelag=15;
+points=timelag+1;
+tau=dt*timelag;
+
+%Number of trajectories
+N=3000; 
+
+%Number of Bins for fitting
+Nb=round(N/100);
+
+%Number of Bootstraps
+numboot=50;
+
+
+%%
+%%%%%%%%%%DIFFUSION SIMULATION AND CREATION OF JDD%%%%%%%%%%
+%set a seed
+seed=randi(1000);
+
+%Simulate Anomalous Diffusion
+[x]=AnomalousDiffusion1D(Dalpha,alpha,points,N,dt,tau,seed);
+
+%Create the Jump Distance
+[jd]=JumpDistance1D(x,N); 
+
+%Plot the Jump Distance
+figure(1)
 [dr, Ni, yi, ri] =  BinningHist(jd, N, Nb,'yes');
-%parameter fitting, leave out for now until it works....
-%param = ModelFitting(tau, dr, ri, yi, Ni, N, points);
-if alpha < 0.5
-    %minb=-500^(.5/alpha); %limits on inverse laplace transform
-    minb=-1100;
-else
-    minb=-500;
-end
 
+%Plot the predicted JDD on top of it
 fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha/2-1)/(2.*pi).*exp(-ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2)));
-%data=N*dr/((Dalpha)^(1/2)).*abs(integral(fun,minb,-1*minb,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
-%data=N*dr/((Dalpha)^(1/2)).*abs(integral(fun,minb,10,'ArrayValued',...
-%    true,'AbsTol',1e-6,'RelTol',1e-3))+N*dr/((Dalpha)^(1/2)).*...
-%    abs(integral(fun,10,-1*minb,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
-
-data=N*dr/((Dalpha)^(1/2)).*abs(integral(fun,minb,-100,'ArrayValued',...
-    true,'AbsTol',1e-6,'RelTol',1e-3))+N*dr/((Dalpha)^(1/2)).*...
-    abs(integral(fun,-100,100,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3))+N*dr/((Dalpha)^(1/2)).*...
-    abs(integral(fun,100,-1*minb,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
-
-
-hold on
-plot(ri,data,'b','LineWidth',1.5)
-
-%try splitting it up into 200 point intevals
-%first find the total number of intevals needed
-intsize=200;
-numint=ceil(abs(minb+100)/intsize);
-testtest=zeros(1,Nb);
-
-for i=1:numint
-    testtest=testtest+2*N*dr/((Dalpha)^(1/2)).*abs(integral(fun,...
-        minb+(i-1)*intsize,minb+i*intsize,...
-        'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
+if alpha < 0.5
+    min=-300^(.5/alpha); 
+else
+    min=-500;
 end
-testtest=testtest+N*dr/((Dalpha)^(1/2)).*abs(integral(fun,-100,...
-    100,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
+predictedJDD=2*N*dr/((Dalpha)^(1/2)*2).*abs(integral(fun,min,-1*min,'ArrayValued',true,'AbsTol',2e-5));
+hold on
+plot(ri,predictedJDD,'k','LineWidth',1.5)
 
-plot(ri,testtest,'r')
+%%
+%%%%%%%%%%MODEL FITTING%%%%%%%%%%
+param = ModelFitting1D(tau, dr, ri, yi, Ni,N, points, dt, x);
 
-%param1 = ModelFitting1DA(tau, dr, ri, yi, Ni, N, points);
-% param2 = ModelFitting1DA2(tau, dr, ri, yi, Ni, N, points);
-% 
-% alpha=param2.alpha;
-% Dalpha=param2.Dalpha;
-% 
-% fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha/2-1)/(2.*pi).*exp(-ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2)));
-% data=2*N*dr/((Dalpha)^(1/2)*2).*abs(integral(fun,min,-1*min,'ArrayValued',true,'AbsTol',2e-5));
-% plot(ri,data,'r')
+%plotting best fit for each model
+diffusionbest=N*dr/((pi*param.D*tau)^(1/2)).*exp(-ri.^2/(4*param.D*tau));
+hold on
+plot(ri,diffusionbest,'b','LineWidth',1.5)
 
-%param = ModelFitting1DA(tau, dr, ri, yi, Ni, N, points)
-%param = ModelFitting1DA(tau, dr, ri, yi, Ni, N, points, dt, x)
-% 
-% data2=N*dr/((pi*param.D*tau)^(1/2)).*exp(-ri.^2/(4*param.D*tau));
-% hold on
-% plot(ri,data2,'r')
-% 
-% z2 = -(ri.^2+param.V^2*tau^2)/(4*param.Dv*tau);
-% y2 = ri*param.V/(2*param.Dv);
-% data2 = N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2+y2);
-% plot(ri,data2,'y')
+z2 = -(ri.^2+param.V^2*tau^2)/(4*param.Dv*tau);
+y2 = ri*param.V/(2*param.Dv);
+directedbest = N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2+y2);
+plot(ri,directedbest,'r','LineWidth',1.5)
 
-% alpha=param.alpha;
-% Dalpha=param.Dalpha;
-% 
-% if alpha < 0.5
-%     %minb=-500^(.5/alpha); %limits on inverse laplace transform
-%     minb=-700;
-% else
-%     minb=-500;
-% end
-% 
-% fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha/2-1)/(2.*pi).*exp(-ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2)));
-% data=2*N*dr/((Dalpha)^(1/2)*2).*abs(integral(fun,minb,-1*minb,'ArrayValued',true,'AbsTol',1e-6));
-% plot(ri,data,'r','LineWidth',1.5)
+if param.alpha < 0.5
+    min=-300^(.5/alpha); 
+else
+    min=-500;
+end
+fun2=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(param.alpha/2-1)/(2.*pi).*...
+    exp(-ri./(sqrt(param.Dalpha)).*((1i*p)^(param.alpha/2)));
+anombest=2*N*dr/((param.Dalpha)^(1/2)*2).*abs(integral(fun,min,-1*min,...
+    'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
+plot(ri,anombest,'g','LineWidth',1.5)
 
+legend('Jump Distance Distribution',['Predicted Anomalous Fit, \alpha=',...
+    num2str(alpha),', D_\alpha=',num2str(Dalpha)],...
+    ['Fit Diffusion, D=',num2str(param.D)],...
+    ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
+    ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
+
+xlabel('Jump Distance')
+ylabel('Count')
+title('Pure Diffusion Jump Distance Distribution and Fitted Results')
+
+%%
+%%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%
+
+%Set Up Storage
+Dboot=zeros(numboot,1);
+Vboot=zeros(numboot,1);
+Dvboot=zeros(numboot,1);
+Daboot=zeros(numboot,1);
+Aboot=zeros(numboot,1);
+
+parfor i=1:numboot
+    X = randi(N,N,1);
+    jdB=jd(X);
+    [drB, NiB, yiB, riB] =  BinningHist(jdB, N, Nb,'no');
+    paramB = ModelFitting1D(tau, drB, riB, yiB, NiB,N, points, dt, x);
+    Dboot(i)=paramB.D;
+    Vboot(i)=paramB.V;
+    Dvboot(i)=paramB.Dv;
+    Daboot(i)=paramB.Dalpha;
+    Aboot(i)=paramB.alpha;
+end
+
+beta=[param.D,param.V,param.Dv,param.Dalpha,param.alpha];
+dbeta=2*[std(Dboot),std(Vboot),std(Dvboot),std(Daboot), std(Aboot)];
+
+%%
+%%%%%%%%%%MODEL SELECTION%%%%%%%%%%
+[prob,value,method]=Integration1D(dbeta,beta,N,yi,ri,dr,tau);
 
