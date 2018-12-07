@@ -13,7 +13,7 @@
 %%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
 %Diffusion Constant
 Dalpha=1; %micro meters^2/s^alpha 
-alpha=0.6; %For A and DA
+alpha=0.8; %For A and DA
 
 %Time Step
 dt=1;
@@ -35,6 +35,7 @@ numboot=50;
 %%
 %set a seed
 seed=randi(1000);
+seed=1;
 
 %Simulate Anomalous Diffusion: 
 [x,y]=AnomalousDiffusion2D(Dalpha,alpha,points,N,dt,tau,seed);
@@ -57,6 +58,10 @@ predictedJDD=N*dr*ri/(Dalpha).*abs(integral(fun,min-1i*1e-6,-1*min-1i*1e-6,...
     'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
 hold on 
 plot(ri,predictedJDD,'k','LineWidth',1.5)
+
+xlabel('Jump Distance')
+ylabel('Count')
+title('Anomalous Diffusion Jump Distance Distribution in 2D')
 
 %%
 %%%%%%%%%%MODEL FITTING%%%%%%%%%%
@@ -90,9 +95,7 @@ legend('Jump Distance Distribution',['Predicted Anomalous Fit, \alpha=',...
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
 
-xlabel('Jump Distance')
-ylabel('Count')
-title('Anomalous Diffusion Jump Distance Distribution and Fitted Results')
+
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%

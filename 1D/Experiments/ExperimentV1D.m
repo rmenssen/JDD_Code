@@ -12,14 +12,14 @@
 %%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
 
 %Diffusion Constant
-V=2; %micro m/s
-Dv=0.5; %micro meters^2/s 
+V=1; %micro m/s
+Dv=1; %micro meters^2/s 
 
 %Time Step
 dt=1;
 
 %Time Lag, points and tau 
-timelag=15;
+timelag=8;
 points=timelag+1;
 tau=dt*timelag;
 
@@ -28,6 +28,7 @@ N=3000;
 
 %Number of Bins for fitting
 Nb=round(N/100);
+%Nb=10;
 
 %Number of Bootstraps
 numboot=50;
@@ -48,11 +49,15 @@ figure(1)
 [dr, Ni, yi, ri] =  BinningHist(jd, N, Nb,'yes');
 
 %Plot the predicted JDD on top of it
+hold on
 z = -(ri.^2+V^2*tau^2)/(4*Dv*tau);
 y = ri*V/(2*Dv);
-predictedJDD = N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z+y);
-hold on
+predictedJDD = N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z+y)+N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z-y)
 plot(ri,predictedJDD,'k','LineWidth',1.5)
+
+xlabel('Jump Distance')
+ylabel('Count')
+title('Directed Diffusion Jump Distance Distribution in 1D')
 
 %%
 %%%%%%%%%%MODEL FITTING%%%%%%%%%%
@@ -85,9 +90,7 @@ legend('Jump Distance Distribution',['Predicted Directed Fit, V=',...
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
 
-xlabel('Jump Distance')
-ylabel('Count')
-title('Pure Diffusion Jump Distance Distribution and Fitted Results')
+
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%

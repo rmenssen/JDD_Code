@@ -25,7 +25,8 @@ for i = 1:length(X1)
         D=X2(i,j);
         
         %calculate predicted probabilities
-        z = dr/((4*pi*D*tau)^(1/2)).*exp(-(ri.^2+V^2*tau^2)/(4*D*tau)+ri*V/(2*D));
+        z = dr/((4*pi*D*tau)^(1/2)).*exp(-(ri.^2+V^2*tau^2)/(4*D*tau)+ri*V/(2*D))+...
+            dr/((4*pi*D*tau)^(1/2)).*exp(-(ri.^2+V^2*tau^2)/(4*D*tau)-ri*V/(2*D));
         
         %calculate P(JDD|model,parameters)
         denom=prod(sqrt(2*pi*N*z));

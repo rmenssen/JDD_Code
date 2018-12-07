@@ -54,6 +54,10 @@ predictedJDD= N*dr*ri.^2*4*pi/((4*pi*Dv*tau)^(3/2)).*exp(z1).*sinh(y1)./y1;
 hold on
 plot(ri,predictedJDD,'k','LineWidth',1.5)
 
+xlabel('Jump Distance')
+ylabel('Count')
+title('Directed Diffusion Jump Distance Distribution in 3D')
+
 %%
 %%%%%%%%%%MODEL FITTING%%%%%%%%%%
 
@@ -93,10 +97,6 @@ legend('Jump Distance Distribution',['Predicted Directed Fit, V=',num2str(V),', 
     ['Fit Diffusion, D=',num2str(param.D)],...
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
-
-xlabel('Jump Distance')
-ylabel('Count')
-title('Directed Diffusion Jump Distance Distribution and Fitted Results')
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%

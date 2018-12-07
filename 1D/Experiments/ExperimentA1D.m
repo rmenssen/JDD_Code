@@ -15,7 +15,7 @@
 Dalpha=1; %micro meters^2/s^alpha For A and Da
 
 %Anomalous Exponent
-alpha=0.6; %For A and DA
+alpha=0.8; %For A and DA
 
 %Time Step
 dt=1;
@@ -61,6 +61,10 @@ predictedJDD=2*N*dr/((Dalpha)^(1/2)*2).*abs(integral(fun,min,-1*min,'ArrayValued
 hold on
 plot(ri,predictedJDD,'k','LineWidth',1.5)
 
+xlabel('Jump Distance')
+ylabel('Count')
+title('Anomalous Diffusion Jump Distance Distribution in 1D')
+
 %%
 %%%%%%%%%%MODEL FITTING%%%%%%%%%%
 param = ModelFitting1D(tau, dr, ri, yi, Ni,N, points, dt, x);
@@ -92,9 +96,7 @@ legend('Jump Distance Distribution',['Predicted Anomalous Fit, \alpha=',...
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
 
-xlabel('Jump Distance')
-ylabel('Count')
-title('Pure Diffusion Jump Distance Distribution and Fitted Results')
+
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%

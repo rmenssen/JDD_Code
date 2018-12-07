@@ -20,6 +20,7 @@
 function[out]=intfuncA3D(X1,X2,N,yi,ri,dr,tau)
 out=zeros(length(X1),length(X2));
 for i = 1:length(X1)
+    i
     for j = 1:length(X2)
         Dalpha=X1(i,j);
         alpha=X2(i,j);

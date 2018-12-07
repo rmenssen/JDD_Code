@@ -19,7 +19,7 @@ D=1; %micro meters^2/s
 dt=1;
 
 %Time Lag, points and tau 
-timelag=15;
+timelag=50;
 points=timelag+1;
 tau=dt*timelag;
 
@@ -53,6 +53,10 @@ predictedJDD=N*dr/((pi*D*tau)^(1/2)).*exp(-ri.^2/(4*D*tau));
 hold on
 plot(ri,predictedJDD,'k','LineWidth',1.5)
 
+xlabel('Jump Distance')
+ylabel('Count')
+title('Pure Diffusion Jump Distance Distribution in 1D')
+
 %%
 %%%%%%%%%%MODEL FITTING%%%%%%%%%%
 param = ModelFitting1D(tau, dr, ri, yi, Ni,N, points, dt, x);
@@ -83,9 +87,6 @@ legend('Jump Distance Distribution',['Predicted Diffusion Fit,D=',num2str(D)],..
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
 
-xlabel('Jump Distance')
-ylabel('Count')
-title('Pure Diffusion Jump Distance Distribution and Fitted Results')
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%

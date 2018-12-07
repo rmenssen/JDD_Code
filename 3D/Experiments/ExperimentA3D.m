@@ -72,6 +72,10 @@ predictedJDD=predictedJDD+N*dr*ri/(Dalpha).*abs(integral(fun,-100-1i*1e-6,100-1i
 hold on 
 plot(ri,predictedJDD,'k','LineWidth',1.5)
 
+xlabel('Jump Distance')
+ylabel('Count')
+title('Anomalous Diffusion Jump Distance Distribution in 3D')
+
 %%
 %%%%%%%%%%MODEL FITTING%%%%%%%%%%
 
@@ -113,9 +117,7 @@ legend('Jump Distance Distribution',['Predicted Anomalous Fit, \alpha=',...
     ['Fit Directed, V=',num2str(param.V),', D_V=',num2str(param.Dv)],...
     ['Fit Anomalous, \alpha=',num2str(param.alpha),', D_\alpha=',num2str(param.Dalpha)])
 
-xlabel('Jump Distance')
-ylabel('Count')
-title('Anomalous Diffusion Jump Distance Distribution and Fitted Results')
+
 
 %%
 %%%%%%%%%%BOOTSTRAPPING%%%%%%%%%%
