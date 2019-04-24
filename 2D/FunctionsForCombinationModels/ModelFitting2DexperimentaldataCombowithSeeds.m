@@ -1,6 +1,6 @@
 %Parameter fitting for 2D Jump Distance Distributions
 %Rebecca Menssen
-%Last Updated: 8/20/18
+%Last Updated: 3/20/19
 
 %This function takes JDD data as the input and outputs the parameters for
 %three different models using lsqcurvefit with weighting.
@@ -23,10 +23,11 @@
 
 
 function param = ModelFitting2DexperimentaldataCombowithSeeds(tau, dr, ri, yi, Ni, N,seeds)
-%Set up optimization options:
+%Set up optimization options: can be customized for better fits (espeically
+%tolerances)
 options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt',...
-    'MaxFunctionEvaluations',1000,'FunctionTolerance',1e-4,...
-    'StepTolerance',1e-4);
+    'MaxFunctionEvaluations',1000,'FunctionTolerance',1e-6,...
+    'StepTolerance',1e-6);
 
 %Create struct to hold all the parameters
 param = struct('D',NaN,'V', NaN, 'Dv', NaN,'Dalpha',NaN,'alpha',NaN, ...
@@ -48,6 +49,9 @@ param.D=temp(1);
 
 %Testing 1D Directed Motion Model
 x0 = [seeds(2), seeds(3)];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp] = lsqnonlin(@NV, x0, [0,0], [], options);
 param.V = temp(1);
 param.Dv = temp(2);
@@ -60,6 +64,9 @@ param.alpha=temp(2);
 
 %Double Diffusion
 x0 = [seeds(6),seeds(7),seeds(8)];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDD,x0,[0,0,0],[1000,1000,1],options);
 param.D1=temp(1);
 param.D2=temp(2);
@@ -67,6 +74,9 @@ param.fdDD=temp(3);
 
 %Diffusion Directed
 x0 = [seeds(9),seeds(10),seeds(11),seeds(12)];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDDV,x0,[0,0,0,0],[1000,1000,1000,1],options);
 param.Dddv=temp(1);
 param.Vddv=temp(2);
@@ -75,6 +85,9 @@ param.fdDDV=temp(4);
 
 %diffusion anomalous
 x0 = [seeds(13),seeds(14),seeds(15),seeds(16)];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDDA,x0,[0,0,0,0],[1000,1000,1000,1],options);
 param.Dda=temp(1);
 param.DAda=temp(2);
@@ -83,6 +96,9 @@ param.fdDDA=temp(4);
 
 %dircted anomalous
 x0 = [seeds(17),seeds(18),seeds(19),seeds(20),seeds(21)];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDVDA,x0,[0,0,0,0,0],[1000,1000,1000,1000,1],options);
 param.Vdvda=temp(1);
 param.DVdvda=temp(2);
@@ -118,7 +134,7 @@ param.fdDVDA=temp(5);
         %predicted JDD probabilities based on input parameters
         z = -(ri.^2+V^2*tau^2)/(4*D*tau);
         y = ri*V/(2*D);
-        predicted = dr*ri/(4*D*tau).*exp(z).*besseli(0, y);
+        predicted = dr*ri/(2*D*tau).*exp(z).*besseli(0, y);
         
         %actual JDD probabilities
         actual = yi;
@@ -191,7 +207,7 @@ param.fdDVDA=temp(5);
         predicted1 = dr*ri/(2*Dddv*tau).*exp(-ri.^2/(4*Dddv*tau));
         z = -(ri.^2+Vddv^2*tau^2)/(4*DVddv*tau);
         y = ri*Vddv/(2*DVddv);
-        predicted2 = dr*ri/(4*DVddv*tau).*exp(z).*besseli(0, y);
+        predicted2 = dr*ri/(2*DVddv*tau).*exp(z).*besseli(0, y);
         predicted2(isnan(predicted2))=0;
         predicted=fdDDV*predicted1+(1-fdDDV)*predicted2;
         
@@ -255,7 +271,7 @@ param.fdDVDA=temp(5);
         
         z = -(ri.^2+Vdvda^2*tau^2)/(4*DVdvda*tau);
         y = ri*Vdvda/(2*DVdvda);
-        predicted1 = dr*ri/(4*DVdvda*tau).*exp(z).*besseli(0, y);
+        predicted1 = dr*ri/(2*DVdvda*tau).*exp(z).*besseli(0, y);
         
         fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(Advda-1)/(2.*pi).*...
             (besselk(0,ri./(sqrt(DAdvda)).*((1i*p)^(Advda/2))));

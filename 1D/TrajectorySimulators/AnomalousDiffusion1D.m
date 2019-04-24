@@ -1,6 +1,6 @@
 %Simulation of 1D Anomalous Diffusion
 %Rebecca Menssen
-%Last edited: 8/30/17-adding final comments and clearing up notation
+%Last edited: 4/9/19 (comments)
 
 %This code simulates anomalous diffusion in a single dimension
 
@@ -39,12 +39,13 @@ times=(0:dt:endtime);
 
 %simulate data trajectories using a continuous time random walk
 for i=1:N
+    i;
     timecount=0; %current time
     xcountold=0; %record x position
     for j=1:points-1
         while timecount < times(j+1)
             %find the time of the next move (time step)
-            newtime=-xi*log(rand)*(sin(alpha*pi)/tan(alpha*pi*rand)-cos(alpha*pi))^(1/alpha);
+            newtime=-xi*log(rand)*(sin(alpha*pi)/tan(alpha*pi*rand)-cos(alpha*pi))^(1/alpha);            
             %update the time
             timecount=timecount+newtime;
             %update position

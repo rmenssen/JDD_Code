@@ -1,13 +1,12 @@
 %Pure Diffusion Demonstration of JDD Method: 3D 
 %Rebecca Menssen
-%Last Updated 9/4/17
+%Last Updated 4/9/19
 
 %This code serves as a way to experiment with the JDD method. It provides a
 %demonstration of how the method works from start to finish. Parameters can
 %be edited to examine accuracy of the method. The code has five sections:
 %Parameters, Simulation, Initial Fitting, Bootstrapping, and Model
-%Selection. On a two core computer, Intel i5 with 8 GB of ram takes ~ 2 hrs
-%Often it is much faster
+%Selection.
 
 %%
 %%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
@@ -26,9 +25,6 @@ tau=dt*timelag;
 %Number of trajectories
 N=3000; 
 
-%Number of Bins for fitting
-Nb=round(N/100);
-
 %Number of Bootstraps
 numboot=50;
 %%
@@ -41,6 +37,16 @@ seed=randi(1000);
 
 %Create the Jump Distance
 [jd]=JumpDistance3D(x,y,z,N); 
+
+%Number of Bins for fitting
+%Choose option here. 
+Nb=round(1+log2(N)); %Sturges Rule
+sigma=sqrt(6*(N-2)/(N+1)/(N+3)); %for Doane's rule
+%Nb=round(1+log2(N)+log2(1+abs(skewness(jd))/sigma)); %Doanes Rule
+%Nb=round(2*(N^(1/3))); %Rice Rule
+%Nb=round(sqrt(N)); %square root guidance
+%Nb=round((max(jd)-min(jd))*N^(1/3)/(3.5*std(jd))); %Scott's Normal Reference Rule. 
+%Nb=round((max(jd)-min(jd))*N^(1/3)/(2*iqr(jd))); %Freedman Diaconis Rule 
 
 %Plot the Jump Distance
 figure(1)
@@ -108,6 +114,9 @@ Aboot=zeros(numboot,1);
 parfor i=1:numboot
     X = randi(N,N,1);
     jdB=jd(X);
+    %If using Doanes Rule, can consider assessing if a different Nb is
+    %needed based on skewness, or can stay with original choice 
+    %Nb=round(1+log2(N)+log2((1+skewness(jd))/(sqrt((6*(N-2))/((N+1)*(N+3)))))); %Doanes Rule
     [drB, NiB, yiB, riB] =  BinningHist(jdB, N, Nb,'no');
     paramB = ModelFitting3D(tau, drB, riB, yiB, NiB,N, points, dt, x,y,z);
     Dboot(i)=paramB.D;

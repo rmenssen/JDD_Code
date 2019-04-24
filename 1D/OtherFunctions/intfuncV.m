@@ -1,6 +1,6 @@
 %Integration function for 1D Directed Diffusion
 %Rebecca Menssen
-%Last Updated: 8/30/17
+%Last Updated: 4/9/19
 
 %This function creates the grid necessary to integrate across a range of
 %directed diffusion parameters using trapz
@@ -37,6 +37,11 @@ for i = 1:length(X1)
         if denom==0
             %in this case, the exponential is zero, but dividing by zero gives
             %a NaN, so you have make sure it is correctly recorded as a zero.
+            out(i,j)=0;
+        end
+        if exp(-N/2.*expo)==0
+            %in this case, the exponential is zero, but occasionally things can
+            %go a bit haywire.
             out(i,j)=0;
         end
     end

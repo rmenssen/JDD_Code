@@ -1,48 +1,54 @@
 %Pure Diffusion Demonstration of JDD Method
 %Rebecca Menssen
-%Last Updated 8/31/17
+%Last Updated: 4/9/19
 
 %This code serves as a way to experiment with the JDD method. It provides a
 %demonstration of how the method works from start to finish. Parameters can
 %be edited to examine accuracy of the method. The code has five sections:
 %Parameters, Simulation, Initial Fitting, Bootstrapping, and Model
-%Selection. On a two core computer, Intel i5 with 8 GB of ram takes ~ 2 hrs
-%Often it is much faster
+%Selection. This code is for non-sliding data, but can be edited for
+%a sliding JDD
 
 %%
 %%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
 
 %Diffusion Constant
-D=1; %micro meters^2/s 
+D=1; %micro meters^2/s
 
 %Time Step
 dt=1;
 
-%Time Lag, points and tau 
-timelag=50;
+%Time Lag, points and tau
+timelag=15;
 points=timelag+1;
 tau=dt*timelag;
 
 %Number of trajectories
-N=3000; 
-
-%Number of Bins for fitting
-Nb=round(N/100);
+N=3000;
 
 %Number of Bootstraps
 numboot=50;
-
 
 %%
 %%%%%%%%%%DIFFUSION SIMULATION AND CREATION OF JDD%%%%%%%%%%
 %set a seed
 seed=randi(1000);
 
-%Simulate Diffusion: 
+%Simulate Diffusion:
 [x]=Diffusion1D(D,points,N,dt,seed);
 
 %Create the Jump Distance
-[jd]=JumpDistance1D(x,N); 
+[jd]=JumpDistance1D(x,N);
+
+%Number of Bins for fitting
+%Choose option here. 
+Nb=round(1+log2(N)); %Sturges Rule
+sigma=sqrt(6*(N-2)/(N+1)/(N+3)); %for Doane's rule
+%Nb=round(1+log2(N)+log2(1+abs(skewness(jd))/sigma)); %Doanes Rule
+%Nb=round(2*(N^(1/3))); %Rice Rule
+%Nb=round(sqrt(N)); %square root guidance
+%Nb=round((max(jd)-min(jd))*N^(1/3)/(3.5*std(jd))); %Scott's Normal Reference Rule. 
+%Nb=round((max(jd)-min(jd))*N^(1/3)/(2*iqr(jd))); %freedman diaconis Rule 
 
 %Plot the Jump Distance
 figure(1)
@@ -68,13 +74,13 @@ plot(ri,diffusionbest,'b','LineWidth',1.5)
 
 z2 = -(ri.^2+param.V^2*tau^2)/(4*param.Dv*tau);
 y2 = ri*param.V/(2*param.Dv);
-directedbest = N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2+y2);
+directedbest = N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2+y2)+N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2-y2);
 plot(ri,directedbest,'r','LineWidth',1.5)
 
 alpha=param.alpha;
 Dalpha=param.Dalpha;
 if alpha < 0.5
-    min=-300^(.5/alpha); 
+    min=-300^(.5/alpha);
 else
     min=-500;
 end
@@ -97,20 +103,22 @@ Vboot=zeros(numboot,1);
 Dvboot=zeros(numboot,1);
 Daboot=zeros(numboot,1);
 Aboot=zeros(numboot,1);
-
+beta=[param.D,param.V,param.Dv,param.Dalpha,param.alpha];
+seeds=beta;
 parfor i=1:numboot
     X = randi(N,N,1);
     jdB=jd(X);
+    %if using Doane's rule can choose to update here.
+    %Nb=round(1+log2(N)+log2((1+skewness(jdB))/(sqrt((6*(N-2))/((N+1)*(N+3))))));
     [drB, NiB, yiB, riB] =  BinningHist(jdB, N, Nb,'no');
     paramB = ModelFitting1D(tau, drB, riB, yiB, NiB,N, points, dt, x);
-    Dboot(i)=paramB.D;
-    Vboot(i)=paramB.V;
-    Dvboot(i)=paramB.Dv;
-    Daboot(i)=paramB.Dalpha;
-    Aboot(i)=paramB.alpha;
+    %if you want to use seeds instead
+    %paramB = ModelFitting1DwithSeeds(tau, drB, riB, yiB, NiB,N, points, dt, seeds);
+    Dboot(i)=paramB.D; Vboot(i)=paramB.V; Dvboot(i)=paramB.Dv;
+    Daboot(i)=paramB.Dalpha; Aboot(i)=paramB.alpha;
 end
 
-beta=[param.D,param.V,param.Dv,param.Dalpha,param.alpha];
+%beta=[param.D,param.V,param.Dv,param.Dalpha,param.alpha];
 dbeta=2*[std(Dboot),std(Vboot),std(Dvboot),std(Daboot), std(Aboot)];
 
 %%

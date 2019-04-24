@@ -1,6 +1,6 @@
 %Simulate 1D Pure Diffusion
 %Rebecca Menssen
-%Last edited: 8/30/17-adding final comments and description
+%Last edited: 4/9/19 (comments)
 
 %This code simulates pure diffusion in a single dimension.
 

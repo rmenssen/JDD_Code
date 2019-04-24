@@ -1,6 +1,6 @@
-%Pure Diffusion Demonstration of JDD Method
+%Directed Diffusion Demonstration of JDD Method
 %Rebecca Menssen
-%Last Updated 8/31/17
+%Last Updated: 4/9/19
 
 %This code serves as a way to experiment with the JDD method. It provides a
 %demonstration of how the method works from start to finish. Parameters can
@@ -12,23 +12,19 @@
 %%%%%%%%%%SIMULATION PARAMETERS%%%%%%%%%%
 
 %Diffusion Constant
-V=1; %micro m/s
+V=5; %micro m/s
 Dv=1; %micro meters^2/s 
 
 %Time Step
 dt=1;
 
 %Time Lag, points and tau 
-timelag=8;
+timelag=15;
 points=timelag+1;
 tau=dt*timelag;
 
 %Number of trajectories
 N=3000; 
-
-%Number of Bins for fitting
-Nb=round(N/100);
-%Nb=10;
 
 %Number of Bootstraps
 numboot=50;
@@ -42,7 +38,17 @@ seed=randi(1000);
 [x]=DirectedMotion1D(V,Dv,points,N,dt,seed);
 
 %Create the Jump Distance
-[jd]=JumpDistance1D(x,N); 
+[jd]=JumpDistance1D(x,N);
+
+%Number of Bins for fitting
+%Choose option here. 
+Nb=round(1+log2(N)); %Sturges Rule
+sigma=sqrt(6*(N-2)/(N+1)/(N+3)); %for Doane's rule
+%Nb=round(1+log2(N)+log2(1+abs(skewness(jd))/sigma)); Doanes Rule
+%Nb=round(2*(N^(1/3))); %Rice Rule
+%Nb=round(sqrt(N)); %square root guidance
+%Nb=round((max(jd)-min(jd))*N^(1/3)/(3.5*std(jd))); %Scott's Normal Reference Rule. 
+%Nb=round((max(jd)-min(jd))*N^(1/3)/(2*iqr(jd))); %Freedman Diaconis Rule 
 
 %Plot the Jump Distance
 figure(1)
@@ -52,7 +58,7 @@ figure(1)
 hold on
 z = -(ri.^2+V^2*tau^2)/(4*Dv*tau);
 y = ri*V/(2*Dv);
-predictedJDD = N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z+y)+N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z-y)
+predictedJDD = N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z+y)+N*dr/((4*pi*Dv*tau)^(1/2)).*exp(z-y);
 plot(ri,predictedJDD,'k','LineWidth',1.5)
 
 xlabel('Jump Distance')
@@ -70,7 +76,7 @@ plot(ri,diffusionbest,'b','LineWidth',1.5)
 
 z2 = -(ri.^2+param.V^2*tau^2)/(4*param.Dv*tau);
 y2 = ri*param.V/(2*param.Dv);
-directedbest = N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2+y2);
+directedbest = N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2+y2)+N*dr/((4*pi*param.Dv*tau)^(1/2)).*exp(z2-y2);
 plot(ri,directedbest,'r','LineWidth',1.5)
 
 alpha=param.alpha;
@@ -105,6 +111,9 @@ Aboot=zeros(numboot,1);
 parfor i=1:numboot
     X = randi(N,N,1);
     jdB=jd(X);
+    %If using Doanes Rule, can consider assessing if a different Nb is
+    %needed based on skewness, or can stay with original choice 
+    %Nb=round(1+log2(N)+log2((1+skewness(jdB))/(sqrt((6*(N-2))/((N+1)*(N+3))))));
     [drB, NiB, yiB, riB] =  BinningHist(jdB, N, Nb,'no');
     paramB = ModelFitting1D(tau, drB, riB, yiB, NiB,N, points, dt, x);
     Dboot(i)=paramB.D;

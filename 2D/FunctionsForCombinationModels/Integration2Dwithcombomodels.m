@@ -1,11 +1,11 @@
 %2D integration for Bayesian Classifier
 %Rebecca Menssen
-%This version of the code: 10/24/16
+%This version of the code: 3/20/2019
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %dbeta--defines the bounds on integration. Have been using 2 times the
-%       standard deviation of the bootstrapped parameters. 
-%beta--median or mean parameter values. Center of integration window. 
+%       standard deviation of the bootstrapped parameters.
+%beta--median or mean parameter values. Center of integration window.
 %N--the number of trajectories/points in JDD
 %yi--vector of the percentage of trajectories in each JDD bin
 %ri--vector of the midpoints of the JDD bins
@@ -23,7 +23,7 @@ function [prob,value,method]=Integration2Dwithcombomodels(dbeta,beta,N,yi,ri,dr,
 prob=zeros(7,1);
 
 %DIFFUSION INTEGRATION
-%define ranges on integration. 
+%define ranges on integration.
 minD=beta(1)-dbeta(1); maxD=beta(1)+dbeta(1);
 
 %Check against negative values. They tend to really mess things up and
@@ -32,7 +32,7 @@ if minD <=0, minD=1e-10; end
 if maxD <=0, maxD=1e-9; end
 
 %Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
+%parameters, and then do the integration.
 lengthD = maxD-minD;
 x1 = linspace(minD,maxD,1000);
 out=intfuncD2D(x1,N,yi,ri,dr,tau);
@@ -43,14 +43,14 @@ prob(1)=1/lengthD*trapz(x1,out);
 minV=beta(2)-dbeta(2); maxV=beta(2)+dbeta(2);
 minDv=beta(3)-dbeta(3); maxDv=beta(3)+dbeta(3);
 
-%Checks against negative values. 
+%Checks against negative values.
 if minV <= 0, minV=0.01; end
 if maxV <= 0, maxV=0.02; end
 if minDv < 0, minDv=1e-10; end
 if maxDv < 0, maxDv=1e-9; end
 
 %Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
+%parameters, and then do the integration.
 lengthV=maxV-minV; lengthDv=maxDv-minDv;
 x1 = linspace(minV,maxV,100); x2 = linspace(minDv,maxDv,100);
 [X1,X2] = meshgrid(x1,x2);
@@ -68,13 +68,36 @@ if maxDalpha <=0, maxDalpha=1e-9; end
 if minalpha <= 0, minalpha=0.01; end
 if maxalpha <= 0, maxalpha=0.02; end
 
-%Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
-lengthDalpha=maxDalpha-minDalpha; lengthalpha=maxalpha-minalpha;
-x1 = linspace(minDalpha,maxDalpha,100); x2 = linspace(minalpha,maxalpha,100);
-[X1,X2] = meshgrid(x1,x2);
-out=intfuncA2D(X1,X2,N,yi,ri,dr,tau);
-prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+%option 1, look at values of alpha and integrate based on that.
+if maxalpha>1 && minalpha>1
+    prob(3)=0;
+elseif maxalpha>1 %just upper bound is above.
+    maxalpha=1;
+    lengthDalpha=maxDalpha-minDalpha; lengthalpha=maxalpha-minalpha;
+    x1 = linspace(minDalpha,maxDalpha,100); x2 = linspace(minalpha,maxalpha,100);
+    [X1,X2] = meshgrid(x1,x2);
+    out=intfuncA2D(X1,X2,N,yi,ri,dr,tau);
+    prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+else %both below 1.
+    lengthDalpha=maxDalpha-minDalpha; lengthalpha=maxalpha-minalpha;
+    x1 = linspace(minDalpha,maxDalpha,100); x2 = linspace(minalpha,maxalpha,100);
+    [X1,X2] = meshgrid(x1,x2);
+    out=intfuncA2D(X1,X2,N,yi,ri,dr,tau);
+    prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+end
+
+% %option 2, exclude anything with alpha>1
+% %Find length of interval, find probabilities at different values of
+% %parameters, and then do the integration.
+% lengthDalpha=maxDalpha-minDalpha; lengthalpha=maxalpha-minalpha;
+% x1 = linspace(minDalpha,maxDalpha,100); x2 = linspace(minalpha,maxalpha,100);
+% [X1,X2] = meshgrid(x1,x2);
+% if beta(5)>1
+%     prob(3)=0;
+% else
+% out=intfuncA2D(X1,X2,N,yi,ri,dr,tau);
+% prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+% end
 
 
 %Double Diffusion
@@ -91,13 +114,13 @@ if minFD <= 0, minFD=0.01; end
 if maxFD <= 0, maxFD=0.02; end
 
 %Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
+%parameters, and then do the integration.
 lengthD1=maxD1-minD1; lengthD2=maxD2-minD2;
 lengthfd=maxFD-minFD;
 x1 = linspace(minD1,maxD1,20); x2 = linspace(minD2,maxD2,20);
 x3 = linspace(minFD,maxFD,10);
 [X1,X2,X3] = meshgrid(x1,x2,x3);
-out=intfuncDD2D(x1,x2,x3,N,yi,ri,dr,tau); 
+out=intfuncDD2D(x1,x2,x3,N,yi,ri,dr,tau);
 prob(4)=1/lengthD1*1/lengthD2*1/lengthfd*trapz(x3,(trapz(x2,trapz(x1,out,1),2)));
 
 
@@ -118,7 +141,7 @@ if minFD <= 0, minFD=0.01; end
 if maxFD <= 0, maxFD=0.02; end
 
 %Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
+%parameters, and then do the integration.
 lengthD=maxD-minD; lengthV=maxV-minV;
 lengthDV=maxDV-minDV; lengthfd=maxFD-minFD;
 x1 = linspace(minD,maxD,20); x2 = linspace(minV,maxV,20);
@@ -144,10 +167,10 @@ if minFD <= 0, minFD=0.01; end
 if maxFD <= 0, maxFD=0.02; end
 
 %Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
+%parameters, and then do the integration.
 lengthDalpha=maxDalpha-minDalpha; lengthalpha=maxalpha-minalpha;
 lengthD=maxD-minD;  lengthfd=maxFD-minFD;
-x1 = linspace(minD,maxD,20); x2=linspace(minDalpha,maxDalpha,20); 
+x1 = linspace(minD,maxD,20); x2=linspace(minDalpha,maxDalpha,20);
 x3=linspace(minalpha,maxalpha,10); x4 = linspace(minFD,maxFD,10);
 out=intfuncDA2D(x1,x2,x3,x4,N,yi,ri,dr,tau);
 prob(6)=1/lengthDalpha*1/lengthalpha*1/lengthD*1/lengthfd*trapz(x4,trapz(x3,trapz(x2,trapz(x1,out,1),2),3));
@@ -173,10 +196,10 @@ if minFD <= 0, minFD=0.01; end
 if maxFD <= 0, maxFD=0.02; end
 
 %Find length of interval, find probabilities at different values of
-%parameters, and then do the integration. 
+%parameters, and then do the integration.
 lengthD=maxD-minD; lengthV=maxV-minV;
 lengthDV=maxDV-minDV; lengthfd=maxFD-minFD;
-x1 = linspace(minV,maxV,20); x2=linspace(minDV,maxDV,20); 
+x1 = linspace(minV,maxV,20); x2=linspace(minDV,maxDV,20);
 x3=linspace(minDalpha,maxDalpha,20); x4=linspace(minalpha,maxalpha,10);
 x5 = linspace(minFD,maxFD,20);
 out=intfuncVA2D(x1,x2,x3,x4,x5,N,yi,ri,dr,tau);

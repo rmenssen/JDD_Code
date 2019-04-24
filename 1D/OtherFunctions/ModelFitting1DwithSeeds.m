@@ -1,9 +1,11 @@
-%Parameter fitting for 2D Jump Distance Distributions
+%Parameter fitting for 1D Jump Distance Distributions
 %Rebecca Menssen
 %Last Updated: 4/9/19
 
 %This function takes JDD data as the input and outputs the parameters for
-%three different models using lsqcurvefit with weighting.
+%three different models using lsqcurvefit with weighting. This function
+%assumes that you have seeds to enter, and does not rely on MSD for
+%seeding. 
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %tau--the duration of each trajectory (the time lag*dt)
@@ -13,13 +15,12 @@
 %N--the number of trajectories
 %points--the number of time points in each trajectory
 %dt--the time step
-%x1,x2--the 1D trajectory for x and y
+%x1--the 1D trajectory
 
 %%%%%%%%%%OUTPUTS%%%%%%%%%%
 %param: strut containing parameters determined by the LSQ fit for each model.
 
-
-function param = ModelFitting2D(tau, dr, ri, yi, Ni, N, points,dt,x1,x2)
+function param = ModelFitting1DwithSeeds(tau, dr, ri, yi, Ni ,N, points, dt, seeds)
 %Set up optimization options: can be customized for better fits (espeically
 %tolerances)
 options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt',...
@@ -35,72 +36,41 @@ param = struct('D',NaN,'V', NaN, 'Dv', NaN,'Dalpha',NaN,'alpha',NaN);
 %bin was empty
 wi=1./((Ni+1)/(N+length(Ni)));
 weights=wi;
-%if the sliding JDD is being used, then we recommend using no weights (i.e.
-%weights=1)
-%weights=1;
-
-%Getting initial seeds by using MSD Analysis
-%make time vector
-t=dt*(0:points-1);
-
-%Finding xsquare average. Have to account for possible missing data and
-%crazy outliers, so using nanmedian to do this. Not exactly MSD then, but
-%for a simple way to find a seed, it works well.
-xsqavg=nanmean((x1-repmat(x1(1,:),size(x1,1),1)).^2+...
-    (x2-repmat(x2(1,:),size(x2,1),1)).^2,2);
-t=t';
-
-%Pure Diffusion Seeding
-[p]=polyfitZero(t, xsqavg,1);
-msdD=abs(p(1)/4);
-
-options2=optimset('Display','off');
-%Directed Diffusion Seeding
-%this seeding can be improved using polyfitzero and 
-[p]=polyfitZero(t,xsqavg,2);
-if p(1)< 0
-    paramF = fmincon(@(x) norm(x(1)^2*t.^2 + 4*x(2)*t - xsqavg),[0.1 0.1],...
-        [],[],[],[],[0 0],[],[],options2);
-    msdV = paramF(1);
-    msdDV = paramF(2);
-else
-    msdV = sqrt(abs(p(1)));
-    msdDV = abs(p(2)/4);
-end
-
-%Anomalous Diffusion Seeding
-[p]=polyfit(log(t(2:end)), log(xsqavg(2:end)),1);
-msdA=abs(p(1));
-msdDA=abs(exp(p(2)-log(4)+log(gamma(1+msdA))));
+%if you are using a sliding construction for the jdd then you do NOT want
+%weights. 
+%weights=1; %for a correlated or sliding JDD. 
 
 %Testing 1D Diffusion Model
-x0=msdD;
+x0=seeds(1);
 [temp]=lsqnonlin(@ND,x0,[],[],options);
 param.D=temp(1);
 
 %Testing 1D Directed Motion Model
-x0 = [msdV, msdDV];
+x0 = [seeds(2), seeds(3)];
 [temp] = lsqnonlin(@NV, x0, [], [], options);
 param.V = temp(1);
 param.Dv = temp(2);
 
 %Testing 1D Anomalous Diffusion Model
-%bounds can be placed on this if desired. will change the method to
-%trust-region reflective. 
-x0 = [msdDA, msdA];
+x0 = [seeds(4), seeds(5)];
+%if you want to fully constrain alpha, you do it as below
+%[temp]=lsqnonlin(@NA,x0,[0 0],[500 1],options);
+%this will change the method used for curve fitting to the trust-region
+%reflective method, and can add computation time. We prefer to just exclude
+%models that fit over alpha=1. 
 [temp]=lsqnonlin(@NA,x0,[],[],options);
 param.Dalpha=temp(1);
 param.alpha=temp(2);
 
-    function outvals = ND(x)
+    function [outvals] = ND(x)
         %Generates the values needed to perform the LSQ non-linear fit for
         %the directed motion model against a given JDD.
         
         %Input Parameter
-        D = x(1);
+        D=x(1);
         
         %predicted JDD probabilities based on input parameters
-        predicted = dr*ri/(2*D*tau).*exp(-ri.^2/(4*D*tau));
+        predicted=dr/((pi*D*tau)^(1/2)).*exp(-ri.^2/(4*D*tau));
         
         %actual JDD probabilities
         actual = yi;
@@ -115,12 +85,12 @@ param.alpha=temp(2);
         
         %Input Parameters
         V = x(1);
-        D= x(2);
+        D = x(2);
         
         %predicted JDD probabilities based on input parameters
         z = -(ri.^2+V^2*tau^2)/(4*D*tau);
         y = ri*V/(2*D);
-        predicted = dr*ri/(2*D*tau).*exp(z).*besseli(0, y);
+        predicted = dr/((4*pi*D*tau)^(1/2)).*exp(z+y)+dr/((4*pi*D*tau)^(1/2)).*exp(z-y);
         
         %actual JDD probabilities
         actual = yi;
@@ -129,7 +99,7 @@ param.alpha=temp(2);
         outvals = sqrt(weights) .* (predicted - actual);
     end
 
-    function outvals=NA(x)
+    function [outvals] = NA(x)
         %Generates the values needed to perform the LSQ non-linear fit for
         %the directed motion model against a given JDD.
         
@@ -141,14 +111,13 @@ param.alpha=temp(2);
         if alpha < 0.5
             min=-300^(.5/alpha); %limits on inverse laplace transform
         else
-            min=-300;
+            min=-500;
         end
         
         %predicted JDD probabilities based on input parameters
-        fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
-            (besselk(0,ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
-        predicted=dr*ri/(Dalpha).*abs(integral(fun,min,-1*min,...
-            'ArrayValued',true,'AbsTol',1e-6));
+        fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha/2-1)/(2.*pi).*...
+            exp(-ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2)));
+        predicted = dr/((Dalpha)^(1/2)).*abs(integral(fun,min,-1*min,'ArrayValued',true,'AbsTol',1e-5,'RelTol',1e-3));
         
         %actual JDD probabilities
         actual = yi;

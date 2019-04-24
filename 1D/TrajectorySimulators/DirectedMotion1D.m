@@ -1,6 +1,6 @@
 %Simulate 1D Directed Diffusion
 %Rebecca Menssen
-%Last edited: 8/30/17-cleaning up notation and adding final comments
+%Last edited: 4/9/19 (comments)
 
 %This code simulates directed diffusion in a single dimension.
 

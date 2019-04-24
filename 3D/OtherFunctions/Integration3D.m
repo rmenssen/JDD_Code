@@ -1,6 +1,6 @@
 %3D integration for Bayesian Classifier
 %Rebecca Menssen
-%This version of the code: 10/24/16
+%This version of the code: 4/24/19
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %dbeta--defines the bounds on integration. Have been using 2 times the
@@ -75,6 +75,10 @@ out=intfuncV3D(X1,X2,N,yi,ri,dr,tau);
 prob(2)=1/lengthV*1/lengthDv*trapz(x2,trapz(x1,out,1));
 
 %ANOMALOUS DIFFUSION INTEGRATION
+%here we do integrate for all values of alpha. Since alpha should be less
+%than 1 for the method, you can place constraints on max or min alpha, or
+%only integrate if alpha<1 (see 1D integration for examples of how to do
+%this). 
 
 minDalpha=beta(4)-dbeta(4);
 maxDalpha=beta(4)+dbeta(4);

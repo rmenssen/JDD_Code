@@ -1,6 +1,6 @@
 %2D integration for Bayesian Classifier
 %Rebecca Menssen
-%This version of the code: 10/24/16
+%This version of the code: 4/9/19
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %dbeta--defines the bounds on integration. Have been using 2 times the
@@ -98,6 +98,9 @@ end
 
 %Find length of interval, find probabilities at different values of
 %parameters, and then do the integration. 
+%here we don't exclude any values of alpha. For examples of how to exclude
+%alpha>1, see 1D code or experimental code. Or you can just exclude the
+%model when examining the probabilities. 
 lengthDalpha=maxDalpha-minDalpha;
 lengthalpha=maxalpha-minalpha;
 x1 = linspace(minDalpha,maxDalpha,100);
@@ -105,6 +108,11 @@ x2 = linspace(minalpha,maxalpha,100);
 [X1,X2] = meshgrid(x1,x2);
 out=intfuncA2D(X1,X2,N,yi,ri,dr,tau);
 prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+if isnan(prob(3)) %occasionally happens due to things not being properly registered as 0...
+        %see model fitting 1D for ways around this and intfuncD1D for an
+        %example. 
+    prob(3)=0;
+end
 
 %Normalize Probabilities
 prob=prob/sum(prob);

@@ -24,23 +24,23 @@ for i = 1:length(X1)
     for j = 1:length(X2)
         D=X2(j);
         a = -(ri.^2+V^2*tau^2)/(4*D*tau);
-                    b = ri*V/(2*D);
+        b = ri*V/(2*D);
         part1=(dr*ri/(2*D*tau).*exp(a).*besseli(0, b));
         for k=1:length(X3)
             Dalpha=X3(k);
             for l=1:length(X4)
-%                 [i,j,k,l]
+                %                 [i,j,k,l]
                 alpha=X4(l);
                 %setting integration limits based on alpha
-                    if alpha < 0.5
-                        min=-300^(.5/alpha); %limits on inverse laplace transform
-                    else
-                        min=-500;
-                    end
-                    fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
-                        (besselk(0,ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
-                    part2=dr*ri/(Dalpha).*abs(integral(fun,min-1i*1e-6,...
-                        -1*min-1i*1e-6,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
+                if alpha < 0.5
+                    min=-300^(.5/alpha); %limits on inverse laplace transform
+                else
+                    min=-500;
+                end
+                fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(alpha-1)/(2.*pi).*...
+                    (besselk(0,ri./(sqrt(Dalpha)).*((1i*p)^(alpha/2))));
+                part2=dr*ri/(Dalpha).*abs(integral(fun,min-1i*1e-6,...
+                    -1*min-1i*1e-6,'ArrayValued',true,'AbsTol',1e-6,'RelTol',1e-3));
                 parfor m=1:length(X5)
                     fd=X5(m);
                     

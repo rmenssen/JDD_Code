@@ -1,6 +1,6 @@
 %1D integration for Bayesian Classifier
 %Rebecca Menssen
-%This version of the code: 8/31/17
+%This version of the code: 4/9/19
 
 %%%%%%%%%%INPUTS%%%%%%%%%%
 %dbeta--defines the bounds on integration. Have been using 2 times the
@@ -74,6 +74,12 @@ x2 = linspace(minDv,maxDv,100);
 out=intfuncV(X1,X2,N,yi,ri,dr,tau);
 prob(2)=1/lengthV*1/lengthDv*trapz(x2,trapz(x1,out,1));
 
+%in this case, no guards are put in place against V=0 (or close to zero).
+%This is an easy thing to add, and essentially you can set it up like what
+%was done for anomalous below and choose a cutoff for V. Then if it is
+%below that, it is zero probability since it is essentially pure diffusion.
+%
+
 %ANOMALOUS DIFFUSION INTEGRATION
 
 minDalpha=beta(4)-dbeta(4);
@@ -98,15 +104,37 @@ end
 
 %Find length of interval, find probabilities at different values of
 %parameters, and then do the integration. 
-lengthDalpha=maxDalpha-minDalpha;
-lengthalpha=maxalpha-minalpha;
-x1 = linspace(minDalpha,maxDalpha,100);
-x2 = linspace(minalpha,maxalpha,100);
-[X1,X2] = meshgrid(x1,x2);
-out=intfuncA(X1,X2,N,yi,ri,dr,tau);
-prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+% lengthDalpha=maxDalpha-minDalpha;
+% lengthalpha=maxalpha-minalpha;
+% x1 = linspace(minDalpha,maxDalpha,100);
+% x2 = linspace(minalpha,maxalpha,100);
+% [X1,X2] = meshgrid(x1,x2);
+% out=intfuncA(X1,X2,N,yi,ri,dr,tau);
+% prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
 
-%Normalize Probabilities
+%a way to not bias towards more complicated results if alpha is near 1. 
+if maxalpha>1 && minalpha>1
+    prob(3)=0;
+elseif maxalpha>1 %just upper bound is above.
+    maxalpha=1;
+    lengthDalpha=maxDalpha-minDalpha;
+    lengthalpha=maxalpha-minalpha;
+    x1 = linspace(minDalpha,maxDalpha,100);
+    x2 = linspace(minalpha,maxalpha,100);
+    [X1,X2] = meshgrid(x1,x2);
+    out=intfuncA(X1,X2,N,yi,ri,dr,tau);
+    prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+else %both below 1.
+    lengthDalpha=maxDalpha-minDalpha;
+    lengthalpha=maxalpha-minalpha;
+    x1 = linspace(minDalpha,maxDalpha,100);
+    x2 = linspace(minalpha,maxalpha,100);
+    [X1,X2] = meshgrid(x1,x2);
+    out=intfuncA(X1,X2,N,yi,ri,dr,tau);
+    prob(3)=1/lengthalpha*1/lengthDalpha*trapz(x2,trapz(x1,out,1));
+end
+
+%Normalize Probabilities (not required)
 prob=prob/sum(prob);
 
 %Select the best method

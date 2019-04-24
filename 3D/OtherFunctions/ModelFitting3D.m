@@ -1,6 +1,6 @@
 %Parameter fitting for 1D Jump Distance Distributions
 %Rebecca Menssen
-%Last Updated: 8/30/17-cleaning up comments
+%Last Updated: 4/9/19
 
 %This function takes JDD data as the input and outputs the parameters for
 %three different models using lsqcurvefit with weighting.
@@ -19,10 +19,11 @@
 %param: strut containing parameters determined by the LSQ fit for each model.
 
 function param = ModelFitting3D(tau, dr, ri, yi, Ni, N, points,dt,x1,x2,x3)
-%Set up optimization options:
+%Set up optimization options: can be customized for better fits (espeically
+%tolerances)
 options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt',...
     'MaxFunctionEvaluations',1000,'FunctionTolerance',1e-4,...
-    'StepTolerance',1e-4);
+    'StepTolerance',1e-4,'Display','off');
 
 %Create struct to hold all the parameters
 param = struct('D',NaN,'V', NaN, 'Dv', NaN,'Dalpha',NaN,'alpha',NaN);
@@ -33,22 +34,33 @@ param = struct('D',NaN,'V', NaN, 'Dv', NaN,'Dalpha',NaN,'alpha',NaN);
 %bin was empty
 wi=1./((Ni+1)/(N+length(Ni)));
 weights=wi;
+%if using the sliding method to construct the JDD, we do not recommend
+%using weights, so set weights to 1. 
+%weights=1;
 
 t=dt*(0:points-1); %xvalues
 %need to change this once we have non-zero starting values. Check this
 %later. %changed to nanmedian to get rid of the effect of crazy outliers
-xsqavg=nanmedian((x1-repmat(x1(1,:),size(x1,1),1)).^2+...
+xsqavg=nanmean((x1-repmat(x1(1,:),size(x1,1),1)).^2+...
     (x2-repmat(x2(1,:),size(x2,1),1)).^2+(x3-repmat(x3(1,:),size(x3,1),1)).^2,2);
 t=t';
 
 %Pure Difusion Seeding
-[p]=polyfit(t, xsqavg,1);
+[p]=polyfitZero(t, xsqavg,1);
 msdD=abs(p(1)/6);
 
 %Directed Diffusion Seeding
-[p]=polyfit(t, xsqavg,2);
-msdV=sqrt(abs(p(1)));
-msdDV=abs(p(2)/6);
+options2=optimset('Display','off');
+[p]=polyfitZero(t, xsqavg,2);
+if p(1)< 0
+    paramF = fmincon(@(x) norm(x(1)^2*t.^2 + 6*x(2)*t - xsqavg),[0.1 0.1],...
+        [],[],[],[],[0 0],[],[],options2);
+    msdV = paramF(1);
+    msdDV = paramF(2);
+else
+    msdV = sqrt(abs(p(1)));
+    msdDV = abs(p(2)/6);
+end
 
 %Anomalous Diffusion Seeding
 [p]=polyfit(log(t(2:end)), log(xsqavg(2:end)),1);
@@ -67,6 +79,11 @@ param.V = temp(1);
 param.Dv = temp(2);
 
 %Testing 1D Anomalous Diffusion Model
+%we do not constrain alpha here even though alpha should be less than one.
+%Instead, we treat it in the model selection step or exclude the model
+%entirely if that is the case. To add in constraints, you can switch the
+%method to the trust-region-reflective method by editing the bound
+%constraints below. 
 x0 = [msdDA, msdA];
 [temp]=lsqnonlin(@NA,x0,[],[],options);
 param.Dalpha=temp(1);

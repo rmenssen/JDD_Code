@@ -39,6 +39,7 @@ times=(0:dt:endtime);
 
 %simulate data trajectories using a continuous time random walk
 for i=1:N
+    i
     timecount=0; %current time
     xcountold=0; %record x position
     ycountold=0; %record y position

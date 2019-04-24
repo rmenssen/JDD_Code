@@ -1,6 +1,6 @@
 %Parameter fitting for 2D Jump Distance Distributions
 %Rebecca Menssen
-%Last Updated: 8/20/18
+%Last Updated: 3/20/19
 
 %This function takes JDD data as the input and outputs the parameters for
 %three different models using lsqcurvefit with weighting.
@@ -20,7 +20,8 @@
 %param: strut containing parameters determined by the LSQ fit for each model.
 
 function param = ModelFitting2DexperimentaldataCombo(tau, dr, ri, yi, Ni, N, maxtimestep,dt,xsqavg)
-%Set up optimization options:
+%Set up optimization options: can be customized for better fits (espeically
+%tolerances)
 options = optimoptions('lsqnonlin', 'Algorithm', 'levenberg-marquardt',...
     'MaxFunctionEvaluations',1000,'FunctionTolerance',1e-4,...
     'StepTolerance',1e-4);
@@ -67,6 +68,9 @@ param.D=temp(1);
 
 %Testing 1D Directed Motion Model
 x0 = [msdV, msdDV];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp] = lsqnonlin(@NV, x0, [0,0], [], options);
 param.V = temp(1);
 param.Dv = temp(2);
@@ -79,6 +83,9 @@ param.alpha=temp(2);
 
 %Double Diffusion
 x0 = [msdD, msdD/2,.6];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDD,x0,[0,0,0],[1000,1000,1],options);
 param.D1=temp(1);
 param.D2=temp(2);
@@ -86,6 +93,9 @@ param.fdDD=temp(3);
 
 %Diffusion Directed
 x0 = [msdD, msdV, msdDV,.5];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDDV,x0,[0,0,0,0],[1000,1000,1000,1],options);
 param.Dddv=temp(1);
 param.Vddv=temp(2);
@@ -94,6 +104,9 @@ param.fdDDV=temp(4);
 
 %diffusion anomalous
 x0 = [msdD, msdDA, msdA,.5];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDDA,x0,[0,0,0,0],[1000,1000,1000,1],options);
 param.Dda=temp(1);
 param.DAda=temp(2);
@@ -102,6 +115,9 @@ param.fdDDA=temp(4);
 
 %dircted anomalous
 x0 = [msdV, msdDV, msdDA, msdA, 0.5];
+%suggested limits are given here. To use them, you need to use the trust
+%region reflective algorithm and thus change the options. otherwise it
+%defaults to levenberg marquart
 [temp]=lsqnonlin(@NDVDA,x0,[0,0,0,0,0],[1000,1000,1000,1000,1],options);
 param.Vdvda=temp(1);
 param.DVdvda=temp(2);
@@ -137,7 +153,7 @@ param.fdDVDA=temp(5);
         %predicted JDD probabilities based on input parameters
         z = -(ri.^2+V^2*tau^2)/(4*D*tau);
         y = ri*V/(2*D);
-        predicted = dr*ri/(4*D*tau).*exp(z).*besseli(0, y);
+        predicted = dr*ri/(2*D*tau).*exp(z).*besseli(0, y);
         
         %actual JDD probabilities
         actual = yi;
@@ -210,7 +226,7 @@ param.fdDVDA=temp(5);
         predicted1 = dr*ri/(2*Dddv*tau).*exp(-ri.^2/(4*Dddv*tau));
         z = -(ri.^2+Vddv^2*tau^2)/(4*DVddv*tau);
         y = ri*Vddv/(2*DVddv);
-        predicted2 = dr*ri/(4*DVddv*tau).*exp(z).*besseli(0, y);
+        predicted2 = dr*ri/(2*DVddv*tau).*exp(z).*besseli(0, y);
         
         predicted=fdDDV*predicted1+(1-fdDDV)*predicted2;
         
@@ -274,7 +290,7 @@ param.fdDVDA=temp(5);
         
         z = -(ri.^2+Vdvda^2*tau^2)/(4*DVdvda*tau);
         y = ri*Vdvda/(2*DVdvda);
-        predicted1 = dr*ri/(4*DVdvda*tau).*exp(z).*besseli(0, y);
+        predicted1 = dr*ri/(2*DVdvda*tau).*exp(z).*besseli(0, y);
         
         fun=@(p) (exp(1i.*p.*tau)).*(1i.*p)^(Advda-1)/(2.*pi).*...
             (besselk(0,ri./(sqrt(DAdvda)).*((1i*p)^(Advda/2))));

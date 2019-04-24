@@ -18,7 +18,6 @@
 function [jd]=jddsweep2D(x,y,timelag)
 %empty struct for the jump distances
 jd=[];
-
 jd = vertcat(jd,sqrt((x(1+timelag:end,:)-x(1:end-timelag,:)).^2 ...
     + (y(1+timelag:end,:)-y(1:end-timelag,:)).^2));
 jd=jd(:);
